@@ -30,6 +30,23 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Build Llama.cpp Toolbox Image (Local Load)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./llama.cpp/
+          file: ./llama.cpp/toolbox.llama.Dockerfile
+          load: true
+          tags: docker.io/kyuz0/llamacpp-toolbox-gfx900:rocm-${{ matrix.rocm_version }}
+          build-args: |
+            ROCM_VERSION=${{ matrix.rocm_version }}
+            ROCM_DOCKER_ARCH=gfx900
+
+      - name: Running smoke test
+        run: |
+          docker run --rm docker.io/kyuz0/llamacpp-toolbox-gfx900:rocm-${{ matrix.rocm_version }} llama version
+          docker run --rm docker.io/kyuz0/llamacpp-toolbox-gfx900:rocm-${{ matrix.rocm_version }} llama-cli --help || [[ $? -eq 1 || $? -eq 0 ]]
+          docker run --rm docker.io/kyuz0/llamacpp-toolbox-gfx900:rocm-${{ matrix.rocm_version }} llama-server --help || [[ $? -eq 1 || $? -eq 0 ]]
+
       - name: Build and Push Llama.cpp Toolbox Image
         uses: docker/build-push-action@v5
         with:
